@@ -1,0 +1,50 @@
+package {
+    default_visibility: ["//visibility:private"],
+    default_applicable_licenses: ["external_mpdecimal_license"],
+}
+
+// See: http://go/android-license-faq
+license {
+    name: "external_mpdecimal_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-BSD",
+    ],
+    license_text: [
+        "COPYRIGHT.txt",
+    ],
+}
+
+cc_library_static {
+    name: "libmpdec",
+    host_supported: true,
+
+    srcs: ["libmpdec/*.c"],
+    exclude_srcs: ["libmpdec/bench*.c"],
+    generated_headers: ["mpdecimal_h"],
+    export_generated_headers: ["mpdecimal_h"],
+
+    cflags: ["-DANSI"],
+    multilib: {
+        lib32: {
+            cflags: ["-DCONFIG_32=1"],
+        },
+        lib64: {
+            cflags: ["-DCONFIG_64=1"],
+        },
+    },
+
+    visibility: ["//external/python/cpython3:__subpackages__"],
+}
+
+cc_genrule {
+    name: "mpdecimal_h",
+    host_supported: true,
+    cmd: "if [ $$CC_MULTILIB == 'lib32' ]; then " +
+        "  sed 's/@MPD_HEADER_CONFIG@/#define MPD_CONFIG_32 1/' $(in) >$(out); " +
+        "else " +
+        "  sed 's/@MPD_HEADER_CONFIG@/#define MPD_CONFIG_64 1/' $(in) >$(out); " +
+        "fi",
+    srcs: ["libmpdec/mpdecimal.h.in"],
+    out: ["mpdecimal.h"],
+}
